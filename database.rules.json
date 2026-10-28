@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "got": {
+      ".read": true,
+      "$item": {
+        ".write": "$item.length < 40",
+        ".validate": "newData.val() === true"
+      }
+    }
+  }
+}
