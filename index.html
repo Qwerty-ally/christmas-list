@@ -225,7 +225,74 @@
     object-fit:contain;
     filter:drop-shadow(0 6px 10px rgba(20,30,20,.14));
   }
-  .card.claimed .photo-wrap img{filter:grayscale(.5) opacity(.65);}
+
+  /* ---------- store label ---------- */
+  .store{
+    position:absolute; top:10px; left:10px; z-index:5;
+    font-family:"JetBrains Mono", monospace; font-size:.66rem; font-weight:600;
+    letter-spacing:.08em; text-transform:uppercase;
+    background:var(--paper); color:var(--ink-soft);
+    border:1px solid var(--line); border-radius:999px; padding:3px 9px;
+  }
+  .store.amazon{background:#fff7ea; color:#a35400; border-color:#f1d6ae;}
+  .store.zoki{background:#fff2f8; color:#a63a6f; border-color:#f0cbdd;}
+
+  /* ---------- wrapped-gift overlay ---------- */
+  .wrap{
+    position:absolute; inset:0; z-index:3;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      linear-gradient(90deg, transparent calc(50% - 10px), var(--gold) calc(50% - 10px), #dcb062 50%, var(--gold) calc(50% + 10px), transparent calc(50% + 10px)),
+      linear-gradient(0deg, transparent calc(50% - 10px), var(--gold) calc(50% - 10px), #dcb062 50%, var(--gold) calc(50% + 10px), transparent calc(50% + 10px)),
+      repeating-linear-gradient(45deg, #c31432 0 14px, #ad0f2a 14px 28px);
+    opacity:0; transform:scale(.7);
+    transition:opacity .3s ease, transform .45s cubic-bezier(.2,1.5,.4,1);
+    pointer-events:none;
+  }
+  .card.claimed .wrap{opacity:1; transform:scale(1);}
+  .wrap svg{width:84px; height:64px; margin-top:-8px; filter:drop-shadow(0 3px 4px rgba(0,0,0,.28));}
+  .wrapped-label{
+    position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+    background:var(--paper); color:var(--cranberry);
+    font-family:"Bricolage Grotesque", sans-serif; font-weight:700; font-size:.78rem;
+    letter-spacing:.06em; text-transform:uppercase;
+    padding:3px 10px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.2);
+  }
+  @media (prefers-reduced-motion:reduce){ .wrap{transition:none;} }
+
+  /* ---------- string lights ---------- */
+  .lights{height:58px; overflow:hidden; margin-bottom:-20px;}
+  .lights svg{display:block; width:100%; height:58px;}
+  .bulb{animation:twinkle 2.4s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:1;} 50%{opacity:.35;}}
+  @media (prefers-reduced-motion:reduce){ .bulb,.tree .orn{animation:none;} }
+
+  /* ---------- hero extras ---------- */
+  .hero-grid{display:flex; align-items:flex-end; justify-content:space-between; gap:24px;}
+  .hero .tree{width:170px; height:auto; flex:none; margin-bottom:-12px;}
+  .tree .orn{animation:twinkle 3s ease-in-out infinite;}
+  @media (max-width:640px){ .hero .tree{display:none;} }
+  .countdown{display:flex; align-items:baseline; gap:10px; margin:6px 0 20px;}
+  .cd-num{font-family:"JetBrains Mono", monospace; font-weight:600; font-size:2.4rem; color:var(--cranberry); line-height:1;}
+  .cd-label{font-size:1.05rem; color:var(--ink-soft);}
+  .hero-tools{display:flex; flex-wrap:wrap; align-items:center; gap:8px;}
+  .toggle{
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 12px; border-radius:999px;
+    border:1px solid var(--line); background:var(--paper); color:var(--ink-soft);
+    font-family:"Bricolage Grotesque", sans-serif; font-weight:600; font-size:.8rem; cursor:pointer;
+  }
+  .toggle svg{width:14px; height:14px;}
+  .toggle[aria-pressed="true"]{background:var(--pine); border-color:var(--pine); color:var(--pine-ink);}
+  .toggle:focus-visible{outline:2px solid var(--cranberry); outline-offset:2px;}
+  .sync{font-family:"JetBrains Mono", monospace; font-size:.72rem; color:var(--ink-soft); display:inline-flex; align-items:center; gap:6px;}
+  .sync::before{content:""; width:7px; height:7px; border-radius:50%; background:#b9bfb4;}
+  .sync.live::before{background:var(--pine-2);}
+  .sync.error::before{background:var(--cranberry);}
+
+  #snow,#confetti{position:fixed; inset:0; width:100%; height:100%; pointer-events:none;}
+  #snow{z-index:15;}
+  #confetti{z-index:40;}
 
   .tag{
     position:absolute;
@@ -341,12 +408,54 @@
   <div class="jump-inner" id="jumpInner"></div>
 </nav>
 
+<canvas id="snow" aria-hidden="true"></canvas>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="lights" id="lights" aria-hidden="true"></div>
+
 <div class="hero">
-  <div class="hero-eyebrow">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M6 6l12 12M18 6L6 18"/></svg>
-    2026 wish list
+  <div class="hero-grid">
+    <div>
+      <div class="hero-eyebrow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M2 12h20M6 6l12 12M18 6L6 18"/></svg>
+        2026 wish list
+      </div>
+      <h1 class="title">Finn's Christmas List</h1>
+      <div class="countdown" id="countdown"></div>
+      <div class="hero-tools">
+        <button class="toggle" id="snowToggle" aria-pressed="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 3.5l3 2.5 3-2.5M9 20.5l3-2.5 3 2.5"/></svg>
+          Snow
+        </button>
+        <button class="toggle" id="soundToggle" aria-pressed="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4l2-2zM10 21h4"/></svg>
+          Sound
+        </button>
+        <span class="sync" id="sync"></span>
+      </div>
+    </div>
+    <svg class="tree" viewBox="0 0 200 250" aria-hidden="true">
+      <polygon points="100,6 106,22 123,22 109,32 114,48 100,38 86,48 91,32 77,22 94,22" fill="#e0b04f" stroke="#b8863a" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M100 40 L148 108 L126 108 L168 168 L140 168 L184 228 L16 228 L60 168 L32 168 L74 108 L52 108 Z" fill="#0f5c34"/>
+      <path d="M100 40 L148 108 L126 108 L168 168 L140 168 L184 228 L100 228 Z" fill="#177a44" opacity=".55"/>
+      <path d="M70 102 Q100 120 132 100" stroke="#e0b04f" stroke-width="3" fill="none" stroke-dasharray="1 7" stroke-linecap="round"/>
+      <path d="M52 162 Q100 186 150 160" stroke="#e0b04f" stroke-width="3" fill="none" stroke-dasharray="1 7" stroke-linecap="round"/>
+      <path d="M36 220 Q100 246 166 218" stroke="#e0b04f" stroke-width="3" fill="none" stroke-dasharray="1 7" stroke-linecap="round"/>
+      <circle class="orn" cx="92" cy="80" r="6" fill="#c31432"/>
+      <circle class="orn" cx="116" cy="92" r="5" fill="#e0b04f" style="animation-delay:.6s"/>
+      <circle class="orn" cx="80" cy="140" r="6" fill="#e0b04f" style="animation-delay:1.2s"/>
+      <circle class="orn" cx="124" cy="146" r="6" fill="#c31432" style="animation-delay:.3s"/>
+      <circle class="orn" cx="102" cy="130" r="4.5" fill="#f4faf3" style="animation-delay:1.8s"/>
+      <circle class="orn" cx="64" cy="202" r="6" fill="#c31432" style="animation-delay:.9s"/>
+      <circle class="orn" cx="140" cy="200" r="6" fill="#e0b04f" style="animation-delay:1.5s"/>
+      <circle class="orn" cx="102" cy="196" r="5" fill="#f4faf3" style="animation-delay:2.1s"/>
+      <rect x="90" y="228" width="20" height="14" rx="2" fill="#7a4b2a"/>
+      <rect x="128" y="222" width="38" height="26" rx="3" fill="#c31432"/>
+      <rect x="144" y="222" width="6" height="26" fill="#e0b04f"/>
+      <rect x="128" y="232" width="38" height="6" fill="#e0b04f"/>
+      <rect x="34" y="228" width="30" height="20" rx="3" fill="#e0b04f"/>
+      <rect x="46" y="228" width="6" height="20" fill="#c31432"/>
+    </svg>
   </div>
-  <h1 class="title">Finn's Christmas List</h1>
 </div>
 
 <main id="main"></main>
@@ -434,7 +543,7 @@ const RECIPIENTS = [
 
 // assign stable ids
 let counter=0;
-RECIPIENTS.forEach(r=>r.categories.forEach(c=>c.items.forEach(it=>{it.id="g"+(counter++);})));
+RECIPIENTS.forEach(r=>r.categories.forEach(c=>c.items.forEach(it=>{it.id=it.img;})));
 
 function money(n){return "$"+n;}
 
@@ -444,7 +553,11 @@ function recipientTotal(r){
   return {sum,count};
 }
 
-const GOT_KEY = "xmas26_got";
+// Paste the Firebase web config here to share "got" marks with everyone.
+const FIREBASE_CONFIG = null;
+const FIREBASE_CDN = "https://cdn.jsdelivr.net/npm/firebase@10.12.2/";
+
+const GOT_KEY = "xmas26_got_v2";
 function loadGot(){
   try{ return JSON.parse(localStorage.getItem(GOT_KEY) || "{}"); }catch(e){ return {}; }
 }
@@ -459,8 +572,21 @@ function checkIcon(){
 
 const externalIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17L17 7M9 7h8v8"/></svg>';
 
+const BOW = '<svg viewBox="0 0 80 60"><path d="M40 30C27 8 6 9 10 25c3 13 20 12 30 5z" fill="#e8c06f" stroke="#a57a2c" stroke-width="2"/><path d="M40 30C53 8 74 9 70 25c-3 13-20 12-30 5z" fill="#e8c06f" stroke="#a57a2c" stroke-width="2"/><path d="M37 32l-10 24 7-3 5 6 2-25z" fill="#d9aa55" stroke="#a57a2c" stroke-width="1.5"/><path d="M43 32l10 24-7-3-5 6-2-25z" fill="#d9aa55" stroke="#a57a2c" stroke-width="1.5"/><circle cx="40" cy="30" r="7" fill="#dcb062" stroke="#a57a2c" stroke-width="2"/></svg>';
+
+function storeOf(url){
+  try{
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    if(host.includes("amazon")) return {name:"Amazon", cls:"amazon"};
+    if(host.includes("shopzoki")) return {name:"Zoki", cls:"zoki"};
+    const base = host.split(".")[0];
+    return {name: base.charAt(0).toUpperCase() + base.slice(1), cls:""};
+  }catch(e){ return null; }
+}
+
 function itemCard(it){
   const isGot = !!got[it.id];
+  const store = storeOf(it.url);
   const reqs = it.requirements.map(r=>`<span>${r}</span>`).join("");
   const nameHtml = it.url
     ? `<a href="${it.url}" target="_blank" rel="noopener noreferrer">${it.name}${externalIcon}</a>`
@@ -469,7 +595,9 @@ function itemCard(it){
   <div class="card${isGot? ' claimed':''}" data-id="${it.id}">
     <div class="photo-wrap">
       <span class="tag">${money(it.price)}</span>
+      ${store ? `<span class="store ${store.cls}">${store.name}</span>` : ""}
       <img src="data:image/jpeg;base64,${IMG[it.img]}" alt="${it.name}" loading="lazy">
+      <div class="wrap" aria-hidden="true">${BOW}<span class="wrapped-label">Wrapped</span></div>
     </div>
     <div class="card-body">
       <h3>${nameHtml}</h3>
@@ -510,19 +638,238 @@ function buildNav(){
   }).join("");
 }
 
+let sharedRef = null;
+
+function paintCard(id){
+  const card = document.querySelector(`.card[data-id="${id}"]`);
+  if(!card) return;
+  const isOn = !!got[id];
+  const btn = card.querySelector('.got-btn');
+  btn.classList.toggle('on', isOn);
+  btn.setAttribute('aria-pressed', isOn);
+  btn.innerHTML = `${checkIcon()} ${isOn ? "Got this" : "Mark as got"}`;
+  card.classList.toggle('claimed', isOn);
+}
+
+function paintAll(){
+  document.querySelectorAll('.card').forEach(c=>paintCard(c.dataset.id));
+}
+
 function wireGotButtons(){
   document.querySelectorAll('.got-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const id = btn.dataset.id;
-      got[id] = !got[id];
-      saveGot(got);
-      const card = btn.closest('.card');
-      const isOn = got[id];
-      btn.classList.toggle('on', isOn);
-      btn.setAttribute('aria-pressed', isOn);
-      btn.innerHTML = `${checkIcon()} ${isOn ? "Got this" : "Mark as got"}`;
-      card.classList.toggle('claimed', isOn);
+      const isOn = !got[id];
+      if(isOn) got[id] = true; else delete got[id];
+      paintCard(id);
+      if(isOn){
+        const r = btn.getBoundingClientRect();
+        confetti(r.left + r.width/2, r.top + r.height/2);
+        jingle();
+      }
+      if(sharedRef){
+        sharedRef.child(id).set(isOn ? true : null).catch(()=>setSync("error"));
+      }else{
+        saveGot(got);
+      }
     });
+  });
+}
+
+/* ---------- shared marks (Firebase Realtime Database) ---------- */
+function setSync(state){
+  const el = document.getElementById('sync');
+  el.className = "sync " + state;
+  el.textContent = state === "live" ? "Shared: everyone sees marks"
+    : state === "error" ? "Offline: marks save on this device"
+    : "Marks save on this device";
+}
+
+function loadScript(src){
+  return new Promise((res, rej)=>{
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function connectShared(){
+  setSync("local");
+  if(!FIREBASE_CONFIG) return;
+  try{
+    await loadScript(FIREBASE_CDN + "firebase-app-compat.js");
+    await loadScript(FIREBASE_CDN + "firebase-database-compat.js");
+    firebase.initializeApp(FIREBASE_CONFIG);
+    sharedRef = firebase.database().ref("got");
+    sharedRef.on("value", snap=>{
+      got = snap.val() || {};
+      paintAll();
+      setSync("live");
+    }, ()=>{ sharedRef = null; setSync("error"); });
+  }catch(e){
+    sharedRef = null;
+    setSync("error");
+  }
+}
+
+/* ---------- prefs ---------- */
+function getPref(k, fallback){
+  try{ const v = localStorage.getItem(k); return v === null ? fallback : v === "1"; }catch(e){ return fallback; }
+}
+function setPref(k, v){
+  try{ localStorage.setItem(k, v ? "1" : "0"); }catch(e){}
+}
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+let soundOn = getPref("xmas26_sound", true);
+
+/* ---------- countdown ---------- */
+function updateCountdown(){
+  const el = document.getElementById('countdown');
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let xmas = new Date(now.getFullYear(), 11, 25);
+  if(today > xmas) xmas = new Date(now.getFullYear() + 1, 11, 25);
+  const days = Math.round((xmas - today) / 86400000);
+  el.innerHTML = days === 0
+    ? `<span class="cd-num">Merry Christmas!</span>`
+    : `<span class="cd-num">${days}</span><span class="cd-label">${days === 1 ? "day" : "days"} until Christmas</span>`;
+}
+
+/* ---------- string lights ---------- */
+function drawLights(){
+  const box = document.getElementById('lights');
+  const w = box.clientWidth || window.innerWidth;
+  const span = 140, sag = 18, top = 6;
+  const hooks = Math.max(2, Math.round(w / span) + 1);
+  const step = w / (hooks - 1);
+  const colors = ["#c31432", "#e0b04f", "#177a44", "#2f6fb5"];
+  let wire = `M0 ${top}`;
+  let bulbs = "";
+  let n = 0;
+  for(let i = 0; i < hooks - 1; i++){
+    const x0 = i * step, x1 = x0 + step, cx = x0 + step/2, cy = top + sag*2;
+    wire += ` Q${cx} ${cy} ${x1} ${top}`;
+    for(const t of [0.2, 0.5, 0.8]){
+      const x = (1-t)*(1-t)*x0 + 2*(1-t)*t*cx + t*t*x1;
+      const y = (1-t)*(1-t)*top + 2*(1-t)*t*cy + t*t*top;
+      const c = colors[n % colors.length];
+      const delay = ((n * 0.37) % 2.4).toFixed(2);
+      bulbs += `<g transform="translate(${x.toFixed(1)} ${y.toFixed(1)})"><rect x="-3" y="0" width="6" height="5" rx="1" fill="#3b4a40"/><ellipse class="bulb" style="animation-delay:${delay}s" cx="0" cy="13" rx="5.5" ry="8.5" fill="${c}"/></g>`;
+      n++;
+    }
+  }
+  box.innerHTML = `<svg viewBox="0 0 ${w} 58"><path d="${wire}" fill="none" stroke="#2f3b33" stroke-width="2"/>${bulbs}</svg>`;
+}
+
+/* ---------- snow ---------- */
+function initSnow(){
+  const c = document.getElementById('snow');
+  const ctx = c.getContext('2d');
+  const btn = document.getElementById('snowToggle');
+  let flakes = [], w = 0, h = 0, raf = null;
+  let on = getPref("xmas26_snow", !reduceMotion);
+
+  function make(anywhere){
+    return {x:Math.random()*w, y:anywhere ? Math.random()*h : -6, r:1.2 + Math.random()*2.6,
+            s:.35 + Math.random()*.9, d:Math.random()*Math.PI*2, o:.55 + Math.random()*.4};
+  }
+  function size(){
+    const dpr = window.devicePixelRatio || 1;
+    w = window.innerWidth; h = window.innerHeight;
+    c.width = w * dpr; c.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const count = Math.round(Math.min(120, w * h / 12000));
+    while(flakes.length < count) flakes.push(make(true));
+    flakes.length = count;
+  }
+  function tick(){
+    ctx.clearRect(0, 0, w, h);
+    for(const f of flakes){
+      f.y += f.s; f.d += .012; f.x += Math.sin(f.d) * .45;
+      if(f.y > h + 6) Object.assign(f, make(false));
+      ctx.beginPath();
+      ctx.arc(f.x, f.y, f.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(255,255,255,${f.o})`;
+      ctx.fill();
+      ctx.strokeStyle = `rgba(110,140,170,${f.o * .45})`;
+      ctx.lineWidth = .8;
+      ctx.stroke();
+    }
+    raf = requestAnimationFrame(tick);
+  }
+  function apply(){
+    btn.setAttribute('aria-pressed', on);
+    if(on && !raf){ size(); tick(); }
+    if(!on && raf){ cancelAnimationFrame(raf); raf = null; ctx.clearRect(0, 0, w, h); }
+  }
+  btn.addEventListener('click', ()=>{ on = !on; setPref("xmas26_snow", on); apply(); });
+  window.addEventListener('resize', ()=>{ if(on) size(); });
+  apply();
+}
+
+/* ---------- confetti ---------- */
+function confetti(x, y){
+  if(reduceMotion) return;
+  const c = document.getElementById('confetti');
+  const ctx = c.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = window.innerWidth, h = window.innerHeight;
+  c.width = w * dpr; c.height = h * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const colors = ["#c31432", "#e0b04f", "#177a44", "#ffffff", "#2f6fb5"];
+  const bits = Array.from({length:80}, ()=>({
+    x, y, vx:(Math.random()-.5)*10, vy:-3 - Math.random()*9,
+    s:5 + Math.random()*5, rot:Math.random()*6, vr:(Math.random()-.5)*.4,
+    c:colors[Math.floor(Math.random()*colors.length)]
+  }));
+  const start = performance.now();
+  function frame(now){
+    ctx.clearRect(0, 0, w, h);
+    for(const b of bits){
+      b.vy += .28; b.vx *= .985; b.x += b.vx; b.y += b.vy; b.rot += b.vr;
+      ctx.save();
+      ctx.translate(b.x, b.y); ctx.rotate(b.rot);
+      ctx.fillStyle = b.c;
+      ctx.fillRect(-b.s/2, -b.s/4, b.s, b.s/2);
+      ctx.restore();
+    }
+    if(now - start < 2200) requestAnimationFrame(frame);
+    else ctx.clearRect(0, 0, w, h);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- jingle ---------- */
+let audioCtx = null;
+function tone(f, t, d, type, vol){
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + .01);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t); o.stop(t + d + .05);
+}
+function jingle(){
+  if(!soundOn) return;
+  try{ audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return; }
+  const t0 = audioCtx.currentTime + .02;
+  // "Jin-gle bells"
+  [[0, .14], [.17, .14], [.34, .34]].forEach(([t, d])=>tone(659.25, t0 + t, d, "triangle", .16));
+  // sleigh-bell shimmer
+  for(let i = 0; i < 7; i++){
+    const t = t0 + i * .07;
+    [2637, 3520, 4186].forEach(f=>tone(f * (1 + Math.random()*.012), t, .16, "sine", .03));
+  }
+}
+function initSound(){
+  const btn = document.getElementById('soundToggle');
+  btn.setAttribute('aria-pressed', soundOn);
+  btn.addEventListener('click', ()=>{
+    soundOn = !soundOn;
+    setPref("xmas26_sound", soundOn);
+    btn.setAttribute('aria-pressed', soundOn);
+    if(soundOn) jingle();
   });
 }
 
@@ -579,6 +926,12 @@ buildMain();
 wireGotButtons();
 wireScrollSpy();
 wireCardReveal();
+updateCountdown();
+drawLights();
+window.addEventListener('resize', drawLights);
+initSnow();
+initSound();
+connectShared();
 </script>
 
 </body></html>
