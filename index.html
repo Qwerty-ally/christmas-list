@@ -258,13 +258,6 @@
     letter-spacing:.06em; text-transform:uppercase;
     padding:3px 10px; border-radius:999px; box-shadow:0 2px 6px rgba(0,0,0,.2);
   }
-  .unwrap-hint{
-    position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
-    white-space:nowrap; color:#fff; font-family:"Bricolage Grotesque", sans-serif; font-size:.74rem; font-weight:600;
-    background:rgba(0,0,0,.32); padding:3px 10px; border-radius:999px;
-    opacity:.85; transition:opacity .15s;
-  }
-  .wrap:hover .unwrap-hint{opacity:1;}
   @media (prefers-reduced-motion:reduce){ .wrap{transition:none;} }
 
   /* ---------- string lights ---------- */
@@ -610,7 +603,7 @@ function itemCard(it){
         ${checkIcon()} ${isGot ? "Got this" : "Mark as got"}
       </button>
     </div>
-    <button class="wrap" type="button" data-id="${it.id}" tabindex="-1" aria-hidden="true">${BOW}<span class="wrapped-label">Wrapped</span><span class="unwrap-hint">Tap to unwrap</span></button>
+    <button class="wrap" type="button" data-id="${it.id}" tabindex="-1" aria-hidden="true">${BOW}<span class="wrapped-label">Wrapped</span></button>
   </div>`;
 }
 
